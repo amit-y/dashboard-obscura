@@ -2,24 +2,74 @@ import { useMemo } from "react";
 
 import { Group } from "@visx/group";
 import { AxisBottom, AxisLeft } from "@visx/axis";
-import { LinePath, Bar as VisxBar, Pie } from "@visx/shape";
+import { LinePath, Bar, Pie } from "@visx/shape";
 import { scaleLinear, scaleBand, scaleOrdinal, scaleTime } from "@visx/scale";
+import { curveNatural } from "@visx/curve";
+import {
+  GradientDarkgreenGreen,
+  GradientLightgreenGreen,
+  GradientOrangeRed,
+  GradientPinkBlue,
+  GradientPinkRed,
+  GradientPurpleOrange,
+  GradientPurpleRed,
+  GradientTealBlue,
+  RadialGradient,
+  LinearGradient,
+} from "@visx/gradient";
 
-const width = 180;
-const height = 100;
-const margin = { top: 10, bottom: 20, left: 30, right: 10 };
+const margin = { top: 10, bottom: 30, left: 30, right: 10 };
 
-const ChartNode = ({ data: viz }) => {
+const gradients = [
+  GradientPinkRed,
+  ({ id }) => <RadialGradient id={id} from="#55bdd5" to="#4f3681" r="80%" />,
+  GradientOrangeRed,
+  GradientPinkBlue,
+  ({ id }) => (
+    <LinearGradient id={id} from="#351CAB" to="#621A61" rotate="-45" />
+  ),
+  GradientLightgreenGreen,
+  GradientPurpleOrange,
+  GradientTealBlue,
+  GradientPurpleRed,
+  GradientDarkgreenGreen,
+];
+
+const ChartNode = ({ data: viz, width, height }) => {
   const content = useMemo(() => {
     if (!viz.data) return null;
     const { type } = viz;
 
     if (type === "LINE") {
       const data = viz.data.map(
-        ({ beginTimeSeconds, endTimeSeconds, ...chartData }) => ({
-          x: ((beginTimeSeconds + endTimeSeconds) / 2) * 1000,
-          y: chartData[Object.keys(chartData)?.[0]] || 0,
-        }),
+        ({ beginTimeSeconds, endTimeSeconds, ...chartData }) => {
+          let y;
+          if (chartData.score) {
+            y = chartData.score;
+          } else {
+            const cols = Object.keys(chartData);
+            if (!cols.length) {
+              y = 0;
+            } else if (cols.length === 1) {
+              y =
+                typeof chartData[cols[0]] === "number" ? chartData[cols[0]] : 0;
+            } else {
+              if (cols.includes("score")) {
+                y = chartData.score;
+              } else {
+                const colToUse = cols?.find(
+                  (col) => typeof chartData[col] === "number",
+                );
+                y = colToUse ? chartData[colToUse] : 0;
+              }
+            }
+          }
+
+          return {
+            x: ((beginTimeSeconds + endTimeSeconds) / 2) * 1000,
+            y,
+          };
+        },
       );
       const xExtent = [
         Math.min(...data.map((d) => d.x)),
@@ -38,14 +88,18 @@ const ChartNode = ({ data: viz }) => {
         range: [height - margin.top - margin.bottom, 0],
       });
 
+      const Gradient = gradients[viz.index];
+
       return (
         <svg width={width} height={height}>
           <Group top={margin.top} left={margin.left}>
+            <Gradient id={viz.id} />
             <LinePath
               data={data}
               x={(d) => xScale(d.x)}
               y={(d) => yScale(d.y)}
-              stroke="#222"
+              curve={curveNatural}
+              stroke={`url(#${viz.id})`}
               strokeWidth={2}
             />
             <AxisBottom
@@ -78,14 +132,19 @@ const ChartNode = ({ data: viz }) => {
 
       return (
         <svg width={width} height={height}>
-          <Group top={margin.top} left={margin.left}>
+          {gradients.map((Gradient, i) => {
+            const key = `g${i}`;
+            return <Gradient key={key} id={key} />;
+          })}
+          <Group top={margin.top} left={margin.left + 20}>
             {data.map((d, i) => (
-              <VisxBar
+              <Bar
                 key={i}
                 x={xScale(d.facet)}
                 y={yScale(d.y)}
                 width={xScale.bandwidth()}
                 height={height - margin.top - margin.bottom - yScale(d.y)}
+                fill={`url(#g${i})`}
               />
             ))}
             <AxisBottom
@@ -107,11 +166,30 @@ const ChartNode = ({ data: viz }) => {
       const radius = Math.min(width, height) / 2 - 10;
       const colorScale = scaleOrdinal({
         domain: data.map((d) => d.label),
-        range: ["#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99"],
+        range: [
+          "rgba(255,255,255,0.9)",
+          "rgba(255,255,255,0.8)",
+          "rgba(255,255,255,0.7)",
+          "rgba(255,255,255,0.6)",
+          "rgba(255,255,255,0.5)",
+          "rgba(255,255,255,0.4)",
+          "rgba(255,255,255,0.3)",
+          "rgba(255,255,255,0.2)",
+          "rgba(255,255,255,0.1)",
+        ],
       });
+
+      const Gradient = gradients[viz.index];
 
       return (
         <svg width={width} height={height}>
+          <Gradient id={viz.id} />
+          <rect
+            rx={14}
+            width={width}
+            height={height}
+            fill={`url(#${viz.id})`}
+          />
           <Group top={height / 2} left={width / 2}>
             <Pie
               data={data}
@@ -137,6 +215,7 @@ const ChartNode = ({ data: viz }) => {
       const [res] = viz.data || [];
       const cols = Object.keys(res);
       const display = cols.length ? res[cols[0]] : "";
+
       return (
         <div className="font-[family-name:var(--font-geist-mono)] font-bold text-4xl">
           {display}
@@ -148,7 +227,7 @@ const ChartNode = ({ data: viz }) => {
   }, [viz]);
 
   return (
-    <div className="w-3xs font-[family-name:var(--font-geist-sans)] p-8 rounded-sm bg-white text-center">
+    <div className="w-full h-full items-center font-[family-name:var(--font-geist-sans)] p-8 rounded-sm bg-white bg-opacity-60 text-center">
       <div className="font-bold text-xl mb-5">{viz.title}</div>
       {content}
     </div>

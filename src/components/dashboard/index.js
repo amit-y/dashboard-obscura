@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ReactFlow, Background, Controls } from "@xyflow/react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  useEdgesState,
+  useNodesState,
+} from "@xyflow/react";
 
 import MessageBar from "../message-bar";
 import ChartNode from "../chart-node";
@@ -10,9 +16,7 @@ import Spinner from "../spinner";
 import "./styles.scss";
 import "@xyflow/react/dist/style.css";
 
-const cols = 3;
-const horizontalSpacing = 250;
-const verticalSpacing = 200;
+import { layoutNodes } from "@/utils/layout";
 
 const Dashboard = () => {
   const [message, setMessage] = useState("");
@@ -20,8 +24,8 @@ const Dashboard = () => {
   const [responseMessages, setResponseMessages] = useState([]);
   const [data, setData] = useState({});
   const [flowRect, setFlowRect] = useState({ height: 0, width: 0 });
-  const [nodes, setNodes] = useState([]);
-  const [edges] = useState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges] = useEdgesState([]);
   const flowRef = useRef(null);
   const flowSizeRef = useRef({ height: -1, width: -1 });
 
@@ -41,7 +45,9 @@ const Dashboard = () => {
     );
 
     observer.observe(flowRef.current);
-    return () => observer?.unobserve(flowRef.current);
+    return () => {
+      if (flowRef.current) observer?.unobserve(flowRef.current);
+    };
   }, []);
 
   const handleKeyPress = useCallback(
@@ -109,28 +115,47 @@ const Dashboard = () => {
     [message],
   );
 
-  useEffect(
-    () =>
-      setNodes(
-        () =>
-          data.visualizations?.map((viz, i) => ({
-            id: viz.id,
-            type: "chartNode",
-            data: viz,
-            position: {
-              x:
-                (i % cols) * horizontalSpacing -
-                (Math.floor(Math.random() * 10) + 1) * 10,
-              y:
-                Math.floor(i / cols) * verticalSpacing -
-                (Math.floor(Math.random() * 10) + 1) * 10,
-            },
-          })) || [],
-      ),
-    [data],
-  );
-
   const nodeTypes = useMemo(() => ({ chartNode: ChartNode }), []);
+
+  useEffect(() => {
+    const { visualizations = [] } = data || {};
+    const nodesLayout = layoutNodes(
+      flowRect.width,
+      flowRect.height,
+      visualizations.length,
+    );
+    const onSizeChange = ({ id, width, height }) =>
+      setNodes((ns) =>
+        ns.map((n) =>
+          n.id === id
+            ? {
+                ...n,
+                width,
+                height,
+              }
+            : n,
+        ),
+      );
+
+    setNodes(() =>
+      visualizations.map((viz, i) => ({
+        ...nodesLayout[i],
+        id: viz.id,
+        type: "chartNode",
+        data: {
+          index: i,
+          onSizeChange,
+          ...viz,
+        },
+      })),
+    );
+  }, [data, flowRect]);
+
+  const nodeDragHandler = useCallback(
+    (_, { id, position } = {}) =>
+      setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, position } : n))),
+    [],
+  );
 
   return (
     <div className="h-dvh flex flex-col p-8 font-[family-name:var(--font-geist-sans)]">
@@ -148,6 +173,9 @@ const Dashboard = () => {
               nodes={nodes}
               edges={edges}
               nodeTypes={nodeTypes}
+              onNodesChange={onNodesChange}
+              onNodeDrag={nodeDragHandler}
+              selectNodesOnDrag={false}
               fitView
             >
               <Background />

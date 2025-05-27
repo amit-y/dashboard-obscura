@@ -22,19 +22,22 @@ const Start = () => {
         </button>
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center font-[family-name:var(--font-geist-mono)]">
-        <span className="flex items-center gap-2 text-gray-600 text-xs">
-          &copy; 2025. New Relic. Built with
-          <span role="img" aria-label="blood" title="blood">
-            🩸
+        <span className="flex flex-col md:flex-row items-center gap-2 text-gray-600 text-xs">
+          &copy; 2025. New Relic.
+          <span>
+            Built with{" "}
+            <span role="img" aria-label="blood" title="blood">
+              🩸{" "}
+            </span>
+            <span role="img" aria-label="sweat" title="sweat">
+              💧{" "}
+            </span>
+            and{" "}
+            <span role="img" aria-label="heart" title="heart">
+              ❤️{" "}
+            </span>
+            by team Pied Piper
           </span>
-          <span role="img" aria-label="sweat" title="sweat">
-            💧
-          </span>{" "}
-          and
-          <span role="img" aria-label="heart" title="heart">
-            ❤️
-          </span>{" "}
-          by team Pied Piper
         </span>
       </footer>
     </div>

@@ -7,7 +7,7 @@ const MessageBar = ({ id, message }) => (
     role="alert"
   >
     <div className="flex">
-      <div class="py-1">
+      <div className="py-1">
         <svg
           className="fill-current h-6 w-6 text-orange-500 mr-4"
           xmlns="http://www.w3.org/2000/svg"
