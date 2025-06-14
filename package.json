@@ -6,22 +6,38 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest"
   },
   "dependencies": {
     "@visx/visx": "^3.12.0",
     "@xyflow/react": "^12.6.4",
+    "arrayify-stream": "^3.0.0",
+    "fast-xml-parser": "^5.2.5",
     "next": "15.3.2",
     "openai": "^4.99.0",
+    "rdf-parse": "^4.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "streamify-string": "^1.0.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.27.4",
+    "@babel/plugin-transform-runtime": "^7.27.4",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "babel-jest": "^30.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
+    "jest": "^30.0.0",
+    "jest-environment-jsdom": "^30.0.0",
+    "jest-fetch-mock": "^3.0.3",
     "sass": "^1.89.0",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "whatwg-fetch": "^3.6.20"
   }
 }
